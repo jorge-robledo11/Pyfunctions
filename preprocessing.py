@@ -65,19 +65,25 @@ def preprocessing(path:str) -> pd.DataFrame:
 
         # Reemplazar valores faltantes de distintas fuentes a np.nan
         data = data.fillna(np.nan)
-        data = data.replace({'ERROR': np.nan, '': np.nan, 'None': np.nan, 'n/a': np.nan,
-                             'N/A': np.nan, 'NULL': np.nan, 'NA': np.nan, 'NAN': np.nan})
+        data = data.replace({
+            'ERROR': np.nan,
+            '': np.nan,
+            'None': np.nan,
+            'n/a': np.nan,
+            'N/A': np.nan,
+            'NULL': np.nan, 
+            'NA': np.nan,
+            'NAN': np.nan})
         logger.info('5. Reemplazo de valores faltantes de distintas fuentes realizado exitosamente')
 
         # Transformar los predictores temporales y cambiar su formato
-        t = data.columns[data.columns.str.contains('fecha|date|tiempo|time')]
-        data[t] = data[t].apply(lambda x: pd.to_datetime(x)).apply(lambda x: x.dt.strftime('%Y-%m-%d')).apply(lambda x: pd.to_datetime(x))
+        t = data.filter(regex='fecha|date|tiempo|time').columns
+        data[t] = data[t].apply(lambda x: pd.to_datetime(x, format='%Y-%m-%d'))
         logger.info('6. Transformación de predictores temporales realizado exitosamente')
 
         # Uniformizar los predictores categóricas
-        categoricals = list(data.select_dtypes(include = ['object', 'bool']).columns)
-        # data[categoricals] = data[categoricals].apply(lambda x: x.astype('category').str.lower().str.strip().replace({'nan': np.nan}))
-        data[categoricals] = data[categoricals].fillna(np.nan).applymap(lambda x: x.strip().lower() if isinstance(x, str) else x)
+        categoricals = data.select_dtypes(include=['object', 'bool']).columns
+        data[categoricals] = data[categoricals].applymap(lambda x: x.strip().lower() if isinstance(x, str) else x)
         logger.info('7. Transformación de predictores categóricos realizado exitosamente')
 
         # Remover predictores que su distribución supera el 33.33% como datos faltantes
