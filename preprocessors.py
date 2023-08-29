@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
-class ColumnNameTransformer(BaseEstimator, TransformerMixin):
+class ColumnsNamesTransformer(BaseEstimator, TransformerMixin):
     
     """
     A transformer for renaming columns of a DataFrame using a custom transformation function.
@@ -33,7 +33,7 @@ class ColumnNameTransformer(BaseEstimator, TransformerMixin):
     >>> df = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
     >>> def custom_transform(col_name):
     ...     return col_name.lower()
-    >>> transformer = ColumnNameTransformer(transformation=custom_transform)
+    >>> transformer = ColumnsNamesTransformer(transformation=custom_transform)
     >>> df_transformed = transformer.transform(df)
     >>> df_transformed
        a  b
@@ -69,9 +69,10 @@ class ColumnNameTransformer(BaseEstimator, TransformerMixin):
 
         Returns:
         --------
-        self : ColumnNameTransformer
+        self: ColumnsNamesTransformer
             The fitted transformer instance.
         """
+        
         return self
 
     def transform(self, X: pd.DataFrame):
@@ -92,6 +93,7 @@ class ColumnNameTransformer(BaseEstimator, TransformerMixin):
         
         X = X.copy()
         X_transformed = X.rename(columns=self.transformation)
+        
         return X_transformed
 
     
@@ -177,6 +179,7 @@ class DropDuplicatedRowsTransformer(BaseEstimator, TransformerMixin):
         
         X = X.copy()
         X_no_duplicates = X.drop_duplicates()
+        
         return X_no_duplicates
 
 
