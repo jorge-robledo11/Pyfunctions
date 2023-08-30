@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
 
-class ColumnRenameTransformer(BaseEstimator, TransformerMixin):
+class ColumnsRenameTransformer(BaseEstimator, TransformerMixin):
     
     """
     A transformer for renaming columns of a DataFrame using a custom transformation function.
@@ -32,7 +32,7 @@ class ColumnRenameTransformer(BaseEstimator, TransformerMixin):
     >>> df = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
     >>> def custom_transform(col_name):
     ...     return col_name.lower()
-    >>> transformer = ColumnRenameTransformer(transformation=custom_transform)
+    >>> transformer = ColumnsRenameTransformer(transformation=custom_transform)
     >>> df_transformed = transformer.transform(df)
     >>> df_transformed
        a  b
@@ -136,6 +136,7 @@ class DropDuplicatedRowsTransformer(BaseEstimator, TransformerMixin):
         -----------
         None
         """
+        
         pass
 
     def fit(self, X:pd.DataFrame, y=None):
@@ -273,7 +274,6 @@ class FillMissingValuesTransformer(BaseEstimator, TransformerMixin):
                                              'NAN': np.nan})
         return X_no_missing
 
-
 class DateColumnsTransformer(BaseEstimator, TransformerMixin):
     
     """
@@ -356,9 +356,10 @@ class DateColumnsTransformer(BaseEstimator, TransformerMixin):
         self: DateColumnsTransformer
             The fitted transformer instance.
         """
+        
         return self
 
-    def transform(self, X: pd.DataFrame):
+    def transform(self, X:pd.DataFrame):
         
         """
         Transform date columns of the input DataFrame X to the specified date format.
@@ -386,3 +387,100 @@ class DateColumnsTransformer(BaseEstimator, TransformerMixin):
                 X_transformed[col] = pd.to_datetime(X_transformed[col], format=self.format)
 
         return X_transformed
+
+
+class CategoricalColumnsTransformer(BaseEstimator, TransformerMixin):
+    
+    """
+    A transformer for preprocessing categorical columns in a DataFrame.
+
+    Parameters:
+    -----------
+    strip_and_lower: bool, optional (default=True)
+        If True, strip leading and trailing whitespaces and convert to lowercase for string columns.
+
+    Attributes:
+    -----------
+    strip_and_lower: bool
+        Whether to apply strip and lowercase transformation.
+
+    Methods:
+    --------
+    fit(X, y=None):
+        Fit the transformer to the data. Since this transformer doesn't require any training,
+        it returns itself unchanged.
+
+    transform(X):
+        Preprocess categorical columns in the input DataFrame X.
+
+    Examples:
+    ---------
+    >>> import pandas as pd
+    >>> data = pd.DataFrame({'A': [' Foo', 'Bar  ', 'Baz'], 'B': ['True', ' False ', True]})
+    >>> transformer = CategoricalColumnsTransformer()
+    >>> data_transformed = transformer.transform(data)
+    >>> data_transformed
+         A      B
+    0   foo   true
+    1   bar  false
+    2   baz   true
+    """
+
+    def __init__(self, strip_and_lower=True):
+        
+        """
+        Initialize the transformer.
+
+        Parameters:
+        -----------
+        strip_and_lower : bool, optional (default=True)
+            If True, strip leading and trailing whitespaces and convert to lowercase for string columns.
+        """
+        
+        self.strip_and_lower = strip_and_lower
+
+    def fit(self, X:pd.DataFrame, y=None):
+        """
+        Fit the transformer to the data. Since this transformer doesn't require any training,
+        it returns itself unchanged.
+
+        Parameters:
+        -----------
+        X: pandas.DataFrame
+            The input DataFrame.
+
+        y: None
+            Ignored. This parameter is included for compatibility with scikit-learn's transformers.
+
+        Returns:
+        --------
+        self: CategoricalColumnsTransformer
+            The fitted transformer instance.
+        """
+        
+        return self
+
+    def transform(self, X:pd.DataFrame):
+        
+        """
+        Preprocess categorical columns in the input DataFrame X.
+
+        Parameters:
+        ----------
+        X: pandas.DataFrame
+            The input DataFrame with categorical columns to be preprocessed.
+
+        Returns:
+        -------
+        X_transformed: pandas.DataFrame
+            The DataFrame with categorical columns preprocessed according to the specified options.
+        """
+        
+        X = X.copy()
+
+        if self.strip_and_lower:
+            categoricals = X.select_dtypes(include=['object', 'bool']).columns
+            X[categoricals] = X[categoricals].applymap(lambda x: x.strip().lower() if isinstance(x, str) else x)
+
+        return X
+
