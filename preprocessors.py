@@ -1,7 +1,101 @@
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
+
+class ColumnRenameTransformer(BaseEstimator, TransformerMixin):
     
+    """
+    A transformer for renaming columns of a DataFrame using a custom transformation function.
+
+    Parameters:
+    -----------
+    transformation: function
+        A function that takes a column name (string) as input and returns the new column name.
+
+    Attributes:
+    -----------
+    transformation: function
+        The transformation function used for renaming column names.
+
+    Methods:
+    --------
+    fit(X, y=None):
+        Fit the transformer to the data. Since this transformer doesn't require any training,
+        it returns itself unchanged.
+
+    transform(X):
+        Rename columns of the input DataFrame X using the provided transformation function.
+
+    Examples:
+    ---------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
+    >>> def custom_transform(col_name):
+    ...     return col_name.lower()
+    >>> transformer = ColumnRenameTransformer(transformation=custom_transform)
+    >>> df_transformed = transformer.transform(df)
+    >>> df_transformed
+       a  b
+    0  1  3
+    1  2  4
+    """
+
+    def __init__(self, transformation):
+        
+        """
+        Initialize the transformer with a custom column name transformation function.
+
+        Parameters:
+        ----------
+        transformation : function
+            A function that takes a column name (string) as input and returns the new column name.
+        """
+        
+        self.transformation = transformation
+
+    def fit(self, X:pd.DataFrame, y=None):
+        
+        """
+        Fit the transformer to the data. Since this transformer doesn't require any training,
+        it returns itself unchanged.
+
+        Parameters:
+        -----------
+        X: pandas.DataFrame
+            The input DataFrame.
+
+        y: None
+            Ignored. This parameter is included for compatibility with scikit-learn's transformers.
+
+        Returns:
+        --------
+        self : ColumnNameTransformer
+            The fitted transformer instance.
+        """
+        
+        return self
+
+    def transform(self, X:pd.DataFrame):
+        
+        """
+        Rename columns of the input DataFrame X using the provided transformation function.
+
+        Parameters:
+        -----------
+        X: pandas.DataFrame
+            The input DataFrame with columns to be renamed.
+
+        Returns:
+        --------
+        X_transformed: pandas.DataFrame
+            The DataFrame with column names transformed according to the provided function.
+        """
+        
+        X_transformed = X.rename(columns=self.transformation)
+        
+        return X_transformed
+
+
 class DropDuplicatedRowsTransformer(BaseEstimator, TransformerMixin):
     
     """
