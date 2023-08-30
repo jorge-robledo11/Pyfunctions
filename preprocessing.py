@@ -90,12 +90,6 @@ def preprocessing(path:str) -> pd.DataFrame:
         data.drop(data.columns[data.isnull().mean() > 1/3].to_list(), inplace=True, axis=1)
         logger.info('8. Remoción de predictores con valores faltantes en su distribución superior a 1/3 realizado exitosamente')
 
-        # Castear los predictores identificadores
-        regex = r'identificacion|cliente|cc'
-        id = [col for col in data.columns if re.search(regex, col)]
-        data[id] = data[id].astype('category')
-        logger.info('9. Transformación de predictores identificadores realizado exitosamente')
-
         # Exportar los datos preprocesados
         data.to_parquet('../data/silver-zone/preprocesado_vista360_historico.parquet')
         logger.info('10. Exportación de los datos pre-procesados realizado exitosamente')
