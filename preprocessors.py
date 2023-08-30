@@ -182,7 +182,6 @@ class DropDuplicatedRowsTransformer(BaseEstimator, TransformerMixin):
         
         return X_no_duplicates
 
-
 class FillMissingValuesTransformer(BaseEstimator, TransformerMixin):
     
     """
@@ -365,12 +364,12 @@ class DateColumnsTransformer(BaseEstimator, TransformerMixin):
         Transform date columns of the input DataFrame X to the specified date format.
 
         Parameters:
-        ----------
+        -----------
         X: pandas.DataFrame
             The input DataFrame with date columns to be transformed.
 
         Returns:
-        -------
+        --------
         X_transformed : pandas.DataFrame
             The DataFrame with date columns transformed to the specified format.
         """
@@ -387,7 +386,6 @@ class DateColumnsTransformer(BaseEstimator, TransformerMixin):
                 X_transformed[col] = pd.to_datetime(X_transformed[col], format=self.format)
 
         return X_transformed
-
 
 class CategoricalColumnsTransformer(BaseEstimator, TransformerMixin):
     
@@ -440,6 +438,7 @@ class CategoricalColumnsTransformer(BaseEstimator, TransformerMixin):
         self.strip_and_lower = strip_and_lower
 
     def fit(self, X:pd.DataFrame, y=None):
+        
         """
         Fit the transformer to the data. Since this transformer doesn't require any training,
         it returns itself unchanged.
@@ -466,12 +465,12 @@ class CategoricalColumnsTransformer(BaseEstimator, TransformerMixin):
         Preprocess categorical columns in the input DataFrame X.
 
         Parameters:
-        ----------
+        -----------
         X: pandas.DataFrame
             The input DataFrame with categorical columns to be preprocessed.
 
         Returns:
-        -------
+        --------
         X_transformed: pandas.DataFrame
             The DataFrame with categorical columns preprocessed according to the specified options.
         """
@@ -484,3 +483,94 @@ class CategoricalColumnsTransformer(BaseEstimator, TransformerMixin):
 
         return X
 
+class DropColumnsTransformer(BaseEstimator, TransformerMixin):
+    
+    """
+    A transformer for dropping columns in a DataFrame based on a missing value threshold.
+
+    Parameters:
+    -----------
+    threshold: float
+        The threshold for column removal. Columns with missing values exceeding this threshold will be dropped.
+
+    Attributes:
+    -----------
+    features_to_drop_: list
+        A list to store the names of columns that were dropped during transformation.
+
+    Methods:
+    --------
+    fit(X, y=None):
+        Fit the transformer to the data. Since this transformer doesn't require any training, it returns itself unchanged.
+
+    transform(X):
+        Remove columns from the input DataFrame X based on the missing value threshold.
+
+    Examples:
+    ---------
+    >>> import pandas as pd
+    >>> data = pd.DataFrame({'A': [1, 2], 'B': [None, 4], 'C': [5, None]})
+    >>> transformer = DropColumnsTransformer(threshold=1/3)
+    >>> transformed_data = transformer.transform(data)
+    >>> transformer.dropped_columns
+    ['B', 'C']
+    """
+
+    def __init__(self, threshold=1/3):
+        
+        """
+        Initialize the transformer with a missing value threshold.
+
+        Parameters:
+        -----------
+        threshold: float, default 1/3
+            The threshold for column removal. Columns with missing values exceeding this threshold will be dropped.
+        """
+        
+        self.threshold = threshold
+        self.features_to_drop_ = list()
+
+    def fit(self, X:pd.DataFrame, y=None):
+        
+        """
+        Fit the transformer to the data. Since this transformer doesn't require any training,
+        it returns itself unchanged.
+
+        Parameters:
+        -----------
+        X: pandas.DataFrame
+            The input DataFrame.
+
+        y: None
+            Ignored. This parameter is included for compatibility with scikit-learn's transformers.
+
+        Returns:
+        --------
+        self: DropColumnsTransformer
+            The fitted transformer instance.
+        """
+        
+        return self
+
+    def transform(self, X:pd.DataFrame):
+        
+        """
+        Remove columns from the input DataFrame X based on the missing value threshold.
+
+        Parameters:
+        ----------
+        X: pandas.DataFrame
+            The input DataFrame with columns to be potentially removed.
+
+        Returns:
+        -------
+        X_transformed: pandas.DataFrame
+            The DataFrame with columns removed based on the provided threshold.
+        """
+        
+        X_copy = X.copy()
+        columns_to_drop = X.columns[X.isnull().mean() > self.threshold].tolist()
+        self.features_to_drop_ = columns_to_drop  # Store the names of dropped columns
+        X_transformed = X_copy.drop(columns=columns_to_drop)
+        
+        return X_transformed
