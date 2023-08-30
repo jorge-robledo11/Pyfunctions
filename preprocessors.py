@@ -1,101 +1,6 @@
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator, TransformerMixin
-
-
-class ColumnsNamesTransformer(BaseEstimator, TransformerMixin):
-    
-    """
-    A transformer for renaming columns of a DataFrame using a custom transformation function.
-
-    Parameters:
-    -----------
-    transformation: function
-        A function that takes a column name (string) as input and returns the new column name.
-
-    Attributes:
-    -----------
-    transformation: function
-        The transformation function used for renaming column names.
-
-    Methods:
-    --------
-    fit(X, y=None):
-        Fit the transformer to the data. Since this transformer doesn't require any training,
-        it returns itself unchanged.
-
-    transform(X):
-        Rename columns of the input DataFrame X using the provided transformation function.
-
-    Examples:
-    ---------
-    >>> import pandas as pd
-    >>> df = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
-    >>> def custom_transform(col_name):
-    ...     return col_name.lower()
-    >>> transformer = ColumnsNamesTransformer(transformation=custom_transform)
-    >>> df_transformed = transformer.transform(df)
-    >>> df_transformed
-       a  b
-    0  1  3
-    1  2  4
-    """
-
-    def __init__(self, transformation):
-        
-        """
-        Initialize the transformer with a custom column name transformation function.
-
-        Parameters:
-        -----------
-        transformation : function
-            A function that takes a column name (string) as input and returns the new column name.
-        """
-        self.transformation = transformation
-
-    def fit(self, X:pd.DataFrame, y=None):
-        
-        """
-        Fit the transformer to the data. Since this transformer doesn't require any training,
-        it returns itself unchanged.
-
-        Parameters:
-        -----------
-        X: pandas.DataFrame
-            The input DataFrame.
-
-        y: None
-            Ignored. This parameter is included for compatibility with scikit-learn's transformers.
-
-        Returns:
-        --------
-        self: ColumnsNamesTransformer
-            The fitted transformer instance.
-        """
-        
-        return self
-
-    def transform(self, X: pd.DataFrame):
-        
-        """
-        Rename columns of the input DataFrame X using the provided transformation function.
-
-        Parameters:
-        ----------
-        X: pandas.DataFrame
-            The input DataFrame with columns to be renamed.
-
-        Returns:
-        -------
-        X_transformed : pandas.DataFrame
-            The DataFrame with column names transformed according to the provided function.
-        """
-        
-        X = X.copy()
-        X_transformed = X.rename(columns=self.transformation)
-        
-        return X_transformed
-
     
 class DropDuplicatedRowsTransformer(BaseEstimator, TransformerMixin):
     
@@ -273,3 +178,117 @@ class FillMissingValuesTransformer(BaseEstimator, TransformerMixin):
                                              'NA': np.nan,
                                              'NAN': np.nan})
         return X_no_missing
+
+
+class DateColumnsTransformer(BaseEstimator, TransformerMixin):
+    
+    """
+    A transformer for transforming date columns in a DataFrame.
+
+    Parameters:
+    -----------
+    date_columns: list of str, optional (default=None)
+        A list of column names to be transformed. If None, all columns containing
+        'fecha', 'date', 'tiempo', or 'time' in their names will be transformed.
+
+    format: str, optional (default='%Y-%m-%d')
+        The date format to which the columns will be converted.
+
+    Attributes:
+    -----------
+    date_columns: list of str
+        The list of column names to be transformed.
+
+    format: str
+        The date format used for conversion.
+
+    Methods:
+    --------
+    fit(X, y=None):
+        Fit the transformer to the data. Since this transformer doesn't require any training,
+        it returns itself unchanged.
+
+    transform(X):
+        Transform date columns of the input DataFrame X to the specified date format.
+
+    Examples:
+    ---------
+    >>> import pandas as pd
+    >>> df = pd.DataFrame({'fecha_inicio': ['2023-01-01', '2023-02-01'],
+    ...                    'date_ending': ['2023-03-01', '2023-04-01'],
+    ...                    'other_column': [1, 2]})
+    >>> transformer = DateColumnsTransformer()
+    >>> df_transformed = transformer.transform(df)
+    >>> df_transformed
+      fecha_inicio date_ending  other_column
+    0   2023-01-01  2023-03-01             1
+    1   2023-02-01  2023-04-01             2
+    """
+
+    def __init__(self, date_columns=None, format='%Y-%m-%d'):
+        
+        """
+        Initialize the transformer.
+
+        Parameters:
+        -----------
+        date_columns : list of str, optional (default=None)
+            A list of column names to be transformed. If None, all columns containing
+            'fecha', 'date', 'tiempo', or 'time' in their names will be transformed.
+
+        format : str, optional (default='%Y-%m-%d')
+            The date format to which the columns will be converted.
+        """
+        
+        self.date_columns = date_columns
+        self.format = format
+
+    def fit(self, X:pd.DataFrame, y=None):
+        
+        """
+        Fit the transformer to the data. Since this transformer doesn't require any training,
+        it returns itself unchanged.
+
+        Parameters:
+        -----------
+        X: pandas.DataFrame
+            The input DataFrame.
+
+        y: None
+            Ignored. This parameter is included for compatibility with scikit-learn's transformers.
+
+        Returns:
+        --------
+        self: DateColumnsTransformer
+            The fitted transformer instance.
+        """
+        return self
+
+    def transform(self, X: pd.DataFrame):
+        
+        """
+        Transform date columns of the input DataFrame X to the specified date format.
+
+        Parameters:
+        ----------
+        X: pandas.DataFrame
+            The input DataFrame with date columns to be transformed.
+
+        Returns:
+        -------
+        X_transformed : pandas.DataFrame
+            The DataFrame with date columns transformed to the specified format.
+        """
+        X_transformed = X.copy()
+
+        if self.date_columns is None:
+            # If date_columns is not specified, select columns with date-related names
+            date_columns = X.select_dtypes(include=['datetime64']).columns
+        else:
+            date_columns = self.date_columns
+
+        for col in date_columns:
+            if col in X_transformed.columns:
+                X_transformed[col] = pd.to_datetime(X_transformed[col], format=self.format)
+
+        return X_transformed
