@@ -5,7 +5,6 @@ from sklearn.feature_selection import GenericUnivariateSelect, mutual_info_class
 from sklearn.calibration import calibration_curve
 from scipy import stats
 from matplotlib import gridspec
-from yellowbrick.classifier import ClassBalance
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -129,18 +128,23 @@ def plotting_nan_values(data:pd.DataFrame) -> any:
     else:
         # Plotting
         plt.figure(figsize=(14, 6))
-        data[vars_with_nan].isnull().mean().sort_values(ascending=False).plot.bar(color='royalblue', edgecolor='skyblue', lw=0.75)
-        plt.ylabel('Percentage of missing data')
+        data[vars_with_nan].isnull().mean().sort_values(ascending=False).plot.bar(color='crimson', width=0.4, 
+                                                                                  edgecolor='skyblue', lw=0.75)
+        plt.axhline(1/3, color='#E51A4C', ls='dashed', lw=1.5, label='⅓ Missing Values')
+        plt.ylim(0, 1)
+        plt.xlabel('Predictors', fontsize=12)
+        plt.ylabel('Percentage of missing data', fontsize=12)
         plt.xticks(fontsize=10, rotation=25)
         plt.yticks(fontsize=10)
-        plt.grid(True)
+        plt.legend()
+        plt.grid(color='white', linestyle='-', linewidth=0.25)
         plt.tight_layout()
 
 
 # Variables estratificadas por clases
 # Función para obtener la estratificación de clases/target
-def get_balance_classes(data:pd.DataFrame, target:str) -> any:
-
+def class_distribution(data:pd.DataFrame, target:str) -> any:
+    
     """
     Function to get balance by classes
 
@@ -149,26 +153,34 @@ def get_balance_classes(data:pd.DataFrame, target:str) -> any:
         target: str
     
     Return:
-        tmp: print and Dataviz
+        Dataviz
     """
 
-    # Etiquetas
-    labels = data[target].sort_values().unique().tolist()
+    # Distribución de clases
+    distribucion = data[target].value_counts(normalize=True)
 
-    tmp = (data.groupby(target).size().sort_values(ascending=False)) / len(data)
-    tmp = dict(tmp)
-    
-    print('\t\tDistribución de clases')
-    # Número total de muestras
-    print(f'Número total de muestras: {data.shape[0]}')
-    for key, value in tmp.items():
-        print(f'{key}: {value*100:0.2f}%')
+    # Crear figura y ejes
+    fig, ax = plt.subplots(figsize=(10, 4))
 
-    # Plotting
-    plt.figure(figsize=(8, 5))
-    balancer = ClassBalance(labels=labels, colors=['tomato', 'green'])
-    balancer.fit(data[target])
-    balancer.show();
+    # Ajustar el margen izquierdo de los ejes para separar las barras del eje Y
+    ax.margins(y=0.2)
+
+    # Ajustar la posición de las etiquetas de las barras
+    ax.invert_yaxis()
+
+    # Crear gráfico de barras horizontales con la paleta de colores personalizada
+    ax.barh(distribucion.index, distribucion.values, align='center', color='darkblue',
+            edgecolor='white', height=0.5, linewidth=0.5)
+
+    # Definir título y etiquetas de los ejes
+    ax.set_title('Distribución de clases\n', fontsize=14)
+    ax.set_xlabel('Porcentajes', fontsize=12)
+    ax.set_ylabel(f'{target}'.capitalize(), fontsize=12)
+
+    # Mostrar el gráfico
+    plt.grid(color='white', linestyle='-', linewidth=0.25)
+    plt.tight_layout()
+    plt.show()
 
 
 # Función para obtener la matriz de correlaciones entre los predictores
@@ -296,33 +308,6 @@ def plotting_covariance(X:pd.DataFrame, y:pd.Series, continuous:list, n_iter:int
         fig.tight_layout()
 
 
-# Regla de Freedman y Diaconis
-def freedman_and_diaconis_rule(data:pd.DataFrame, variables:list) -> dict:
-    
-    """
-    Function to get optimal number of bins using 
-    the Freedman and Diaconis rule
-    
-    Args:
-        data: DataFrame
-        variables: list
-    
-    Return:
-        dict
-    """
-    
-    bins = list()
-    
-    for var in data[variables]:
-        iqr = np.percentile(data[var], 75) - np.percentile(data[var], 25)
-        bin_width = 2 * iqr / np.power(len(data), 1/3)
-        num_bins = np.int8((np.max(data[var]) -  np.min(data[var])) / bin_width)  + 1
-        bins.append(num_bins)
-    
-    optimal_bins = dict(zip(variables, bins))
-    return optimal_bins
-
-
 # Función para observar el comportamiento de variables temporales
 def temporaries_plots(data:pd.DataFrame, variables:list, target:str):
     
@@ -436,6 +421,104 @@ def diagnostic_plots(data:pd.DataFrame, variables:list) -> any:
         fig.tight_layout()
 
 
+# Revisar la cardinalidad de variables categóricas y discretas
+# Función para graficar variables categóricas
+def categoricals_plot(data:pd.DataFrame, variables:list) -> any:
+    
+    """
+    Function to get distributions graphics into 
+    categoricals and discretes predictors
+
+    Args:
+        data: DataFrame
+        variables: list
+    
+    Return:
+        Dataviz
+    """
+    
+    # Definir el número de filas y columnas para organizar los subplots
+    num_rows = (len(variables) + 1) // 2  # Dividir el número de variables por 2 y redondear hacia arriba
+    num_cols = 2  # Dos columnas de gráficos por fila
+
+    # Crear una figura y ejes para organizar los subplots
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(24, 30))
+    
+    plt.suptitle('Categoricals Plots', fontsize=24, y=0.95)
+    
+    # Asegurarse de que 'axes' sea una matriz 2D incluso si solo hay una variable
+    if len(variables) == 1:
+        axes = axes.reshape(1, -1)
+
+    # Iterar sobre las variables y crear gráficos para cada una
+    for i, var in enumerate(variables):
+        row, col = i // 2, i % 2  # Calcular la fila y columna actual
+
+        # Crear un gráfico de barras en los ejes correspondientes
+        temp_dataframe = pd.Series(data[var].value_counts(normalize=True))
+        temp_dataframe.sort_values(ascending=False).plot.bar(color='royalblue', edgecolor='skyblue', ax=axes[row, col])
+        
+        # Añadir una línea horizontal a 5% para resaltar las categorías poco comunes
+        axes[row, col].axhline(y=0.05, color='#E51A4C', ls='dashed', lw=1.5)
+        axes[row, col].set_ylabel('Porcentajes')
+        axes[row, col].set_xlabel(var)
+        axes[row, col].set_xticklabels(temp_dataframe.index, rotation=25)
+        axes[row, col].grid(color='white', linestyle='-', linewidth=0.25)
+    
+    # Ajustar automáticamente el espaciado entre subplots
+    plt.tight_layout(rect=[0, 0, 1, 0.95])  # El argumento rect controla el espacio para el título superior
+    plt.show()
+
+
+# # Puede quedar obsoleta
+# def categoricals_plot2(data:pd.DataFrame, variables:list) -> any:
+
+#     """
+#     Function to get distributions graphics into 
+#     categoricals predictors
+
+#     Args:
+#         data: DataFrame
+#         variables: list
+    
+#     Return:
+#         Dataviz
+#     """
+    
+#     plt.suptitle('Categoricals Plot', fontsize=16)
+#     for var in variables:
+#         temp_dataframe = pd.Series(data[var].value_counts() / len(data))
+
+#         # Graficar con los porcentajes
+#         temp_dataframe.sort_values(ascending=False).plot.bar(color='lavender', edgecolor='skyblue')
+
+#         # Añadir una línea horizontal a 5% para resaltar categorías poco comunes
+#         plt.axhline(y=0.05, color='#E51A4C', ls='dashed', lw=1.5)
+#         plt.ylabel('Porcentajes')
+#         plt.xlabel(var)
+#         plt.xticks(rotation=25)
+#         plt.grid(color='white', linestyle='-', linewidth=0.25)
+#         plt.show()
+
+
+# Función para graficar las categóricas segmentadas por el target
+def categoricals_hue_target(data:pd.DataFrame, variables:list, target:str) -> any:
+    
+    # Graficos de cómo covarian algunas variables con respecto al target
+    paletas = ['rocket', 'mako', 'crest', 'magma', 'viridis', 'flare']
+    np.random.seed(11)
+
+    for var in data[variables]:
+        plt.figure(figsize=(12, 6))
+        plt.title(f'{var} segmentado por {target}\n', fontsize=12)
+        sns.countplot(x=var, hue=target, data=data, edgecolor='white', lw=0.5, palette=np.random.choice(paletas))
+        plt.ylabel('Cantidades')
+        plt.xticks(fontsize=12, rotation=25)
+        plt.yticks(fontsize=12)
+        plt.grid(color='white', linestyle='-', linewidth=0.25)
+        plt.tight_layout()
+
+
 # Test de Normalidad de D’Agostino y Pearson
 # Función para observar el comportamiento de las variables continuas en una prueba de normalidad
 # Y realizar un contraste de hipótesis para saber si se asemeja a una distribución normal
@@ -475,37 +558,35 @@ def normality_test(data:pd.DataFrame, variables:list) -> any:
         print()
 
 
-def normality_test_v2(data:pd.DataFrame, variables:list):
+# def normality_test_v2(data:pd.DataFrame, variables:list):
 
-    """
-    Esta función falta optimizarla pero es mejor opción
-    """
+#     """
+#     Esta función falta optimizarla pero es mejor opción
+#     """
+#     display(Latex('Si el $pvalue$ < 0.05; se rechaza la $H_0$ sugiere que los datos no se ajustan de manera significativa a una distribución normal'))
     
+#     # Configurar figura
+#     fig = plt.figure(figsize=(24, 20))
+#     plt.suptitle('Prueba de Normalidad', fontsize=18)
+#     gs = gridspec.GridSpec(nrows=len(variables) // 3+1, ncols=3, figure=fig)
     
-    display(Latex('Si el $pvalue$ < 0.05; se rechaza la $H_0$ sugiere que los datos no se ajustan de manera significativa a una distribución normal'))
-    
-    # Configurar figura
-    fig = plt.figure(figsize=(24, 20))
-    plt.suptitle('Prueba de Normalidad', fontsize=18)
-    gs = gridspec.GridSpec(nrows=len(variables) // 3+1, ncols=3, figure=fig)
-    
-    for i, var in enumerate(variables):
+#     for i, var in enumerate(variables):
 
-        ax = fig.add_subplot(gs[i//3, i % 3])
+#         ax = fig.add_subplot(gs[i//3, i % 3])
 
-        # Gráfico Q-Q
-        stats.probplot(data[var], dist='norm', plot=ax)
-        ax.set_xlabel(var)
-        ax.set_xticks(ax.get_xticks())
-        ax.set_xticklabels(ax.get_xticklabels())
-        ax.grid(color='white', linestyle='-', linewidth=0.25)
+#         # Gráfico Q-Q
+#         stats.probplot(data[var], dist='norm', plot=ax)
+#         ax.set_xlabel(var)
+#         ax.set_xticks(ax.get_xticks())
+#         ax.set_xticklabels(ax.get_xticklabels())
+#         ax.grid(color='white', linestyle='-', linewidth=0.25)
 
-        # P-value
-        p_value = stats.normaltest(data[var])[1]
-        ax.text(0.8, 0.9, f"p-value={p_value:0.3f}", transform=ax.transAxes, fontsize=13) 
+#         # P-value
+#         p_value = stats.normaltest(data[var])[1]
+#         ax.text(0.8, 0.9, f"p-value={p_value:0.3f}", transform=ax.transAxes, fontsize=13) 
 
-    plt.tight_layout(pad=3)
-    plt.show()
+#     plt.tight_layout(pad=3)
+#     plt.show()
 
 
 # Definir la transformación de Yeo-Johnson
@@ -622,38 +703,6 @@ def graficar_transformaciones(data:pd.DataFrame, continuous:list, transformacion
         plt.show()
 
 
-# Revisar la cardinalidad de variables categóricas y discretas
-# Función para graficar variables categóricas
-def categoricals_plot(data:pd.DataFrame, variables:list) -> any:
-
-    """
-    Function to get distributions graphics into 
-    categoricals predictors
-
-    Args:
-        data: DataFrame
-        variables: list
-    
-    Return:
-        Dataviz
-    """
-    
-    plt.suptitle('Categoricals Plot', fontsize=16)
-    for var in variables:
-        temp_dataframe = pd.Series(data[var].value_counts() / len(data))
-
-        # Graficar con los porcentajes
-        temp_dataframe.sort_values(ascending=False).plot.bar(color='lavender', edgecolor='skyblue')
-
-        # Añadir una línea horizontal a 5% para resaltar categorías poco comunes
-        plt.axhline(y=0.05, color='#E51A4C', ls='dashed', lw=1.5)
-        plt.ylabel('Porcentajes')
-        plt.xlabel(var)
-        plt.xticks(rotation=25)
-        plt.grid(color='white', linestyle='-', linewidth=0.25)
-        plt.show()
-
-
 # Función para observar todos P-values de los predictores
 def every_pvalue(X_train:pd.DataFrame, y_train):
 
@@ -726,7 +775,34 @@ def pvalues(X_train:pd.DataFrame, y_train):
     # P-values with index
     p_values = p_values.index
     return p_values
-        
+
+
+# Regla de Freedman y Diaconis
+def freedman_and_diaconis_rule(data:pd.DataFrame, variables:list) -> dict:
+    
+    """
+    Function to get optimal number of bins using 
+    the Freedman and Diaconis rule
+    
+    Args:
+        data: DataFrame
+        variables: list
+    
+    Return:
+        dict
+    """
+    
+    bins = list()
+    
+    for var in data[variables]:
+        iqr = np.percentile(data[var], 75) - np.percentile(data[var], 25)
+        bin_width = 2 * iqr / np.power(len(data), 1/3)
+        num_bins = np.int8((np.max(data[var]) -  np.min(data[var])) / bin_width)  + 1
+        bins.append(num_bins)
+    
+    optimal_bins = dict(zip(variables, bins))
+    return optimal_bins
+
 
 # Función para observar la calibración de los modelos posterior a las técnicas de remuestreo
 def plot_calibration_curve(y_true:np.array, y_pred:np.array, bins:float, model_name) -> any:
