@@ -178,7 +178,7 @@ class DropDuplicatedRowsTransformer(BaseEstimator, TransformerMixin):
         """
         
         X = X.copy()
-        X_no_duplicates = X.drop_duplicates()
+        X_no_duplicates = X.drop_duplicates(ignore_index=True)
         
         return X_no_duplicates
 
