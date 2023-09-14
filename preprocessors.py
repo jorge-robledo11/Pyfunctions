@@ -92,7 +92,6 @@ class ColumnsRenameTransformer(BaseEstimator, TransformerMixin):
         """
         
         X_transformed = X.rename(columns=self.transformation)
-        
         return X_transformed
 
 
@@ -179,7 +178,6 @@ class DropDuplicatedRowsTransformer(BaseEstimator, TransformerMixin):
         
         X = X.copy()
         X_no_duplicates = X.drop_duplicates(ignore_index=True)
-        
         return X_no_duplicates
 
 class FillMissingValuesTransformer(BaseEstimator, TransformerMixin):
@@ -384,7 +382,6 @@ class DateColumnsTransformer(BaseEstimator, TransformerMixin):
         for col in date_columns:
             if col in X_transformed.columns:
                 X_transformed[col] = pd.to_datetime(X_transformed[col], format=self.format)
-
         return X_transformed
 
 class CategoricalColumnsTransformer(BaseEstimator, TransformerMixin):
@@ -480,7 +477,6 @@ class CategoricalColumnsTransformer(BaseEstimator, TransformerMixin):
         if self.strip_and_lower:
             categoricals = X.select_dtypes(include=['object', 'bool']).columns
             X[categoricals] = X[categoricals].applymap(lambda x: x.strip().lower() if isinstance(x, str) else x)
-
         return X
 
 class DropColumnsTransformer(BaseEstimator, TransformerMixin):
@@ -572,5 +568,4 @@ class DropColumnsTransformer(BaseEstimator, TransformerMixin):
         columns_to_drop = X.columns[X.isnull().mean() > self.threshold].tolist()
         self.features_to_drop_ = columns_to_drop  # Store the names of dropped columns
         X_transformed = X_copy.drop(columns=columns_to_drop)
-        
         return X_transformed

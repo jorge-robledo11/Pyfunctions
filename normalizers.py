@@ -47,6 +47,7 @@ class CustomColumnsNormalizer(BaseEstimator, TransformerMixin):
     0  0.267261  0.801784  5
     1  0.447214  0.894427  6
     """
+    
     def __init__(self, variables, norm='l2'):
         self.variables = variables
         self.norm = norm
