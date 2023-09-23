@@ -142,8 +142,8 @@ nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels_caffeine, font_size
 # Mostrar el árbol de decisión
 plt.show()
 
-# Probabilidades para cada nodo en el árbol de decisión
 
+# Probabilidades para cada nodo en el árbol de decisión
 node_probabilities = {
     "Migraine Attack": {
         "Sumatriptan": 0.5,
@@ -184,6 +184,26 @@ node_probabilities = {
 }
 
 ############################################################################# === ANÁLISIS DETERMINÍSTICO === #############################################################################
+
+analisis_deterministico = """
+=====================================
+        Análisis Determinístico
+=====================================
+
+• Análisis de escenarios determinísticos: En algunos casos, es útil realizar un análisis en el que se tomen decisiones basadas en probabilidades predefinidas, lo que se conoce como un análisis determinístico. Este enfoque ayuda a comprender cómo se desarrollarían los eventos en situaciones específicas donde las decisiones se toman siguiendo un patrón establecido.
+
+• Estudio de resultados probables: Aunque el análisis es determinístico, aún permite evaluar los resultados probables en función de las probabilidades predefinidas para cada decisión. Esto es valioso para entender cómo las decisiones individuales afectan los resultados finales y cómo diferentes cursos de acción impactan los resultados.
+
+• Reproducibilidad y control: La implementación del análisis determinístico es completamente reproducible y controlable. Puedes realizar el análisis múltiples veces con la misma semilla aleatoria para obtener resultados idénticos. Esto es útil para verificar y validar los resultados, así como para realizar análisis de sensibilidad al cambiar las probabilidades.
+
+• Comparación con análisis probabilísticos: El análisis determinístico sirve como punto de referencia o comparación con análisis probabilísticos más complejos, como simulaciones Monte Carlo. Esto permite evaluar cómo difieren los resultados bajo suposiciones determinísticas en comparación con suposiciones probabilísticas y proporciona una comprensión más completa de los escenarios posibles.
+
+• Situaciones con datos limitados: En situaciones donde no se disponga de datos precisos de probabilidades o donde las probabilidades sean desconocidas, un análisis determinístico puede ser una aproximación razonable para tomar decisiones basadas en suposiciones simplificadas.
+=====================================
+"""
+
+print(analisis_deterministico)
+
 
 # Función para realizar un análisis determinístico en el árbol de decisión
 def deterministic_analysis(node_probabilities):
@@ -246,6 +266,7 @@ def deterministic_analysis(node_probabilities):
 
     return current_node, total_cost
 
+
 # Semilla para efectos de reproducibilidad en el experimento
 random.seed(42)
 
@@ -257,6 +278,26 @@ print(f'Resultado: {result}')
 print(f'Costo Total: $Can {cost:.2f}\n')
 
 ############################################################################# === ANÁLISIS PROBABILÍSTICO === #############################################################################
+
+analisis_probabilistico = """
+=======================================
+        Análisis Probabilístico
+=======================================
+
+En nuestro experimento, utilizamos una función de distribución uniforme para simular el proceso de toma de decisiones en el árbol de decisión. La razón principal para utilizar una distribución uniforme es que, en este contexto, representa una forma justa y equitativa de modelar las probabilidades de tomar diferentes caminos en el árbol de decisión. Aquí hay una explicación intuitiva de por qué elegimos una distribución uniforme:
+
+• Equidad en la elección: Cuando un paciente enfrenta un ataque de migraña y debe decidir entre dos opciones, como tomar Sumatriptan o Caffeine, no tiene información adicional que lo incline significativamente hacia una de las dos opciones. En otras palabras, no hay un sesgo evidente hacia ninguna de las dos decisiones. Por lo tanto, asignar una probabilidad igual (uniforme) a ambas opciones refleja esta falta de sesgo y permite que el modelo de simulación sea imparcial en la toma de decisiones.
+
+• Simplicidad: La distribución uniforme es simple y fácil de entender. Asignar probabilidades iguales a todas las opciones es una suposición simple que se ajusta bien cuando no tenemos información que sugiera lo contrario. Otras distribuciones, como las distribuciones de probabilidad personalizadas basadas en datos, requerirían información adicional y podrían complicar innecesariamente el modelo.
+
+• Reproducibilidad y control: Una distribución uniforme es completamente reproducible y controlable. Esto significa que podemos repetir el experimento de Monte Carlo con la misma semilla aleatoria y obtendremos resultados idénticos. Esto es útil para verificar y validar nuestros resultados.
+
+• Generalización: La distribución uniforme es una elección segura en situaciones donde no tenemos información específica sobre las probabilidades de cada opción. Se puede considerar como un "escenario peor" en términos de incertidumbre, lo que garantiza que nuestro modelo sea conservador y no exagere ni subestime las probabilidades de ciertos eventos.
+=======================================
+"""
+
+print(analisis_probabilistico)
+
 
 # Función para realizar un análisis probabilístico utilizando simulación Monte Carlo
 def monte_carlo_simulation_uniform(node_probabilities:dict, num_simulations:int):
@@ -312,6 +353,7 @@ def monte_carlo_simulation_uniform(node_probabilities:dict, num_simulations:int)
     # Calcular las probabilidades dividiendo el número de ocurrencias por el número total de simulaciones
     probabilities = {key: value / num_simulations for key, value in results.items()}
     return probabilities
+
 
 # Número de simulaciones Monte Carlo
 num_simulations = 10000

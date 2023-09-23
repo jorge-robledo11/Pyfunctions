@@ -1,3 +1,2 @@
-networkx @ file:///home/conda/feedstock_root/build_artifacts/networkx_1680692919326/work
-matplotlib @ file:///D:/bld/matplotlib-suite_1688684981096/work
-matplotlib-inline @ file:///home/conda/feedstock_root/build_artifacts/matplotlib-inline_1660814786464/work
+networkx
+matplotlib
