@@ -1,5 +1,2 @@
-*.ini
-*.log
-
-__pycache__/
-.vscode/
+*
+!utilities/
