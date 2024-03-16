@@ -176,7 +176,6 @@ def covariance_matrix(data: pd.DataFrame):
 
     Args:
         data: DataFrame
-        map_function: function
     
     Return:
         DataFrame
